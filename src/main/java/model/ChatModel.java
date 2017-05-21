@@ -9,6 +9,7 @@ import apps.appsProxy;
 import esayhelper.DBHelper;
 import esayhelper.JSONHelper;
 import esayhelper.jGrapeFW_Message;
+import session.session;
 import subscribe.sdkServer;
 import thirdsdk.wechatHelper;
 import thirdsdk.wechatModel;
@@ -19,8 +20,7 @@ public class ChatModel {
 	private JSONObject _obj = new JSONObject();
 	private String APPID = "wx98fc10d9ac9e0953";
 	private String APPSECRET = "63890fa2402f4e6aff5b86d327bf4a37";
-	private wechatHelper helper = new wechatHelper(APPID,
-			APPSECRET);
+	private wechatHelper helper = new wechatHelper(APPID, APPSECRET);
 
 	private DBHelper getRoute() {
 		if (sdkRoute == null) {
@@ -196,10 +196,18 @@ public class ChatModel {
 	}
 
 	// 获取微信签名
-	public String getSign() {
-		String message = helper.signature(
-				"http%3a%2f%2fputao520.putao282.com%2fjw%2findex.html%23%2fverify");
-		return resultMessage(0, message);
+	public String getSign(String url) {
+		String sign = "";
+		session session = new session();
+		if (session.get(APPID) == null) {
+			url = url.replaceAll("@t", "/");
+			url = url.replaceAll("@q", "&");
+			String message = helper.signature(url);
+			JSONObject object = JSONHelper.string2json(message);
+			session.setget(APPID, object.toString());
+		}
+		sign = session.get(APPID).toString();
+		return resultMessage(0, sign);
 	}
 
 	// 上传媒体文件
@@ -209,8 +217,10 @@ public class ChatModel {
 	}
 
 	// 下载媒体文件
-	public void MediaDownload() {
-		
+	@SuppressWarnings("unchecked")
+	public String MediaDownload(String mediaid) {
+		_obj.put("records", helper.materialJSON(mediaid));
+		return resultMessage(0, _obj.toString());
 	}
 
 	@SuppressWarnings("unchecked")

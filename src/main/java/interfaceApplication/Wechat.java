@@ -87,13 +87,12 @@ public class Wechat {
 	}
 
 	// 微信下载素材
-	public String downloadMedia(String ss) {
-		model.MediaDownload();
-		return null;
+	public String downloadMedia(String mediaid) {
+		return model.MediaDownload(mediaid);
 	}
 	
 	//获取签名
-	public String getSignature() {
-		return model.getSign();
+	public String getSignature(String url) {
+		return model.getSign(url);
 	}
 }

@@ -1,6 +1,12 @@
 package model;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.net.URL;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -8,7 +14,9 @@ import org.json.simple.JSONObject;
 import apps.appsProxy;
 import esayhelper.DBHelper;
 import esayhelper.JSONHelper;
+import esayhelper.TimeHelper;
 import esayhelper.jGrapeFW_Message;
+import nlogger.nlogger;
 import session.session;
 import subscribe.sdkServer;
 import thirdsdk.wechatHelper;
@@ -191,23 +199,31 @@ public class ChatModel {
 
 	public String getopenid(String code) {
 		String openid = "";
+		session session = new session();
+		if (session.get(APPID) != null) {
+			session.delete(APPID);
+		}
+		if (session.get(APPID + "_webtoken") != null) {
+			session.delete(APPID + "_webtoken");
+		}
 		openid = helper.getOpenID(code);
 		return openid;
 	}
 
 	// 获取微信签名
+	@SuppressWarnings("unchecked")
 	public String getSign(String url) {
-		String sign = "";
-		session session = new session();
-		if (session.get(APPID) == null) {
-			url = url.replaceAll("@t", "/");
-			url = url.replaceAll("@q", "&");
-			String message = helper.signature(url);
-			JSONObject object = JSONHelper.string2json(message);
-			session.setget(APPID, object.toString());
-		}
-		sign = session.get(APPID).toString();
-		return resultMessage(0, sign);
+		url = url.replaceAll("@t", "/");
+		url = url.replaceAll("@q", "&");
+		String message = helper.signature(url);
+		JSONObject object = JSONHelper.string2json(message);
+		object.put("appid", APPID);
+		return resultMessage(0, object.toString());
+	}
+
+	// 获取微信用户信息
+	public String getUserInfo(String openid) {
+		return resultMessage(helper.getUserInfo(openid));
 	}
 
 	// 上传媒体文件
@@ -217,10 +233,21 @@ public class ChatModel {
 	}
 
 	// 下载媒体文件
-	@SuppressWarnings("unchecked")
-	public String MediaDownload(String mediaid) {
-		_obj.put("records", helper.materialJSON(mediaid));
-		return resultMessage(0, _obj.toString());
+	public String MediaDownload(String mediaid) throws IOException {
+		byte[] by = helper.materialTempData(mediaid);
+		String Date = TimeHelper.stampToDate(TimeHelper.nowMillis())
+				.split(" ")[0];
+//		String fileurl = "http://123.57.214.226:8080/File/upload/" + Date + "/wechat/";
+		String fileurl = "c://JavaCode//tomcat//webapps//File//upload//" + Date + "\\wechat\\";
+		File file = new File(fileurl);
+		if (!file.exists()) {
+			file.mkdir();
+		}
+		String path = file+"//"+mediaid+".ogg";
+		FileOutputStream fos = new FileOutputStream(path);
+		fos.write(by);
+		fos.close();
+		return resultMessage(0, path.split("webapps")[1]);
 	}
 
 	@SuppressWarnings("unchecked")

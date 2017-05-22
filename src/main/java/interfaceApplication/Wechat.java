@@ -1,6 +1,10 @@
 package interfaceApplication;
 
+import java.io.IOException;
+
 import org.json.simple.JSONObject;
+
+import com.sun.mail.handlers.message_rfc822;
 
 import esayhelper.JSONHelper;
 import model.ChatModel;
@@ -87,12 +91,23 @@ public class Wechat {
 	}
 
 	// 微信下载素材
-	public String downloadMedia(String mediaid) {
-		return model.MediaDownload(mediaid);
+	public String downloadMedia(String mediaid){
+		String message = "";
+		try{
+			message = model.MediaDownload(mediaid);
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+		return message;
 	}
-	
-	//获取签名
+
+	// 获取签名
 	public String getSignature(String url) {
 		return model.getSign(url);
+	}
+
+	// 获取用户信息
+	public String getUserInfo(String openid) {
+		return model.getUserInfo(openid);
 	}
 }

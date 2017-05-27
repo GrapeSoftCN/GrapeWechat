@@ -17,6 +17,7 @@ import esayhelper.JSONHelper;
 import esayhelper.TimeHelper;
 import esayhelper.jGrapeFW_Message;
 import nlogger.nlogger;
+import security.codec;
 import session.session;
 import subscribe.sdkServer;
 import thirdsdk.wechatHelper;
@@ -26,8 +27,8 @@ public class ChatModel {
 	private DBHelper sdkRoute;
 	private DBHelper sdkUser;
 	private JSONObject _obj = new JSONObject();
-	private String APPID = "wx98fc10d9ac9e0953";
-	private String APPSECRET = "63890fa2402f4e6aff5b86d327bf4a37";
+	private String APPID = "wxd4ed724da52799cb";
+	private String APPSECRET = "6b45df4cd58422eff5a3a707500cb8ca";
 	private wechatHelper helper = new wechatHelper(APPID, APPSECRET);
 
 	private DBHelper getRoute() {
@@ -213,8 +214,9 @@ public class ChatModel {
 	// 获取微信签名
 	@SuppressWarnings("unchecked")
 	public String getSign(String url) {
-		url = url.replaceAll("@t", "/");
-		url = url.replaceAll("@q", "&");
+//		url = url.replaceAll("@t", "/");
+//		url = url.replaceAll("@q", "&");
+		url = codec.DecodeHtmlTag(url);
 		String message = helper.signature(url);
 		JSONObject object = JSONHelper.string2json(message);
 		object.put("appid", APPID);
@@ -243,7 +245,7 @@ public class ChatModel {
 		if (!file.exists()) {
 			file.mkdir();
 		}
-		String path = file+"//"+mediaid+".ogg";
+		String path = file+"//"+mediaid+".mp3";
 		FileOutputStream fos = new FileOutputStream(path);
 		fos.write(by);
 		fos.close();

@@ -1,10 +1,7 @@
 package interfaceApplication;
 
-import java.io.IOException;
 
 import org.json.simple.JSONObject;
-
-import com.sun.mail.handlers.message_rfc822;
 
 import esayhelper.JSONHelper;
 import model.ChatModel;

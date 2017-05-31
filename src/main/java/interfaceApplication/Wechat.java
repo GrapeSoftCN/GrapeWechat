@@ -1,10 +1,16 @@
 package interfaceApplication;
 
 
+import java.io.FileInputStream;
+import java.util.Properties;
+
 import org.json.simple.JSONObject;
 
+import apps.appsProxy;
 import esayhelper.JSONHelper;
+import httpClient.request;
 import model.ChatModel;
+import rpc.execRequest;
 
 public class Wechat {
 	private ChatModel model = new ChatModel();
@@ -91,7 +97,9 @@ public class Wechat {
 	public String downloadMedia(String mediaid){
 		String message = "";
 		try{
-			message = model.MediaDownload(mediaid);
+			String hoString = "http://"+getAppIp("file").split("/")[0];
+			System.out.println(hoString);
+			message = request.Get(hoString+"/File/WechatDownload?mediaid="+mediaid);
 		}catch(Exception e){
 			e.printStackTrace();
 		}
@@ -102,7 +110,17 @@ public class Wechat {
 	public String getSignature(String url) {
 		return model.getSign(url);
 	}
-
+	private String getAppIp(String key) {
+		String value = "";
+		try {
+			Properties pro = new Properties();
+			pro.load(new FileInputStream("URLConfig.properties"));
+			value = pro.getProperty(key);
+		} catch (Exception e) {
+			value = "";
+		}
+		return value;
+	}
 	// 获取用户信息
 	public String getUserInfo(String openid) {
 		return model.getUserInfo(openid);

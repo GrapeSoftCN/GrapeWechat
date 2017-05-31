@@ -1,12 +1,14 @@
 package model;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
+import java.util.Properties;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -15,7 +17,10 @@ import apps.appsProxy;
 import esayhelper.DBHelper;
 import esayhelper.JSONHelper;
 import esayhelper.TimeHelper;
+import esayhelper.fileHelper;
 import esayhelper.jGrapeFW_Message;
+import httpClient.request;
+import httpServer.reqSession;
 import nlogger.nlogger;
 import security.codec;
 import session.session;
@@ -33,9 +38,7 @@ public class ChatModel {
 
 	private DBHelper getRoute() {
 		if (sdkRoute == null) {
-			sdkRoute = new DBHelper(
-					appsProxy.configValue().get("db").toString(), "sdkrouter",
-					"id");
+			sdkRoute = new DBHelper(appsProxy.configValue().get("db").toString(), "sdkrouter", "id");
 			// sdkRoute = new DBHelper("localdb", "sdkrouter", "id");
 		}
 		return sdkRoute;
@@ -43,8 +46,7 @@ public class ChatModel {
 
 	private DBHelper getUser() {
 		if (sdkUser == null) {
-			sdkUser = new DBHelper(appsProxy.configValue().get("db").toString(),
-					"sdkuser", "id");
+			sdkUser = new DBHelper(appsProxy.configValue().get("db").toString(), "sdkuser", "id");
 			// sdkUser = new DBHelper("localdb", "sdkuser", "id");
 		}
 		return sdkUser;
@@ -52,14 +54,12 @@ public class ChatModel {
 
 	// 第三方平台
 	public String addRoute(JSONObject object) {
-		String code = sdkServer.addListen(object.get("sdkname").toString(),
-				object.get("invoke").toString());
+		String code = sdkServer.addListen(object.get("sdkname").toString(), object.get("invoke").toString());
 		return resultMessage(findRoute(code));
 	}
 
 	public int EditRoute(String id, JSONObject object) {
-		boolean code = sdkServer.editListen(id,
-				object.get("invoke").toString());
+		boolean code = sdkServer.editListen(id, object.get("invoke").toString());
 		return code == true ? 0 : 99;
 	}
 
@@ -85,8 +85,7 @@ public class ChatModel {
 	public String PageRoute(int ids, int pageSize) {
 		JSONArray array = getRoute().page(ids, pageSize);
 		JSONObject object = new JSONObject();
-		object.put("totalSize",
-				(int) Math.ceil((double) getRoute().count() / pageSize));
+		object.put("totalSize", (int) Math.ceil((double) getRoute().count() / pageSize));
 		object.put("currentPage", ids);
 		object.put("pageSize", pageSize);
 		object.put("data", array);
@@ -100,8 +99,7 @@ public class ChatModel {
 		}
 		JSONArray array = getRoute().dirty().page(ids, pageSize);
 		JSONObject object = new JSONObject();
-		object.put("totalSize",
-				(int) Math.ceil((double) getRoute().count() / pageSize));
+		object.put("totalSize", (int) Math.ceil((double) getRoute().count() / pageSize));
 		object.put("currentPage", ids);
 		object.put("pageSize", pageSize);
 		object.put("data", array);
@@ -143,8 +141,7 @@ public class ChatModel {
 	public String pagePUser(int idx, int pageSize) {
 		JSONArray array = getUser().page(idx, pageSize);
 		JSONObject object = new JSONObject();
-		object.put("totalSize",
-				(int) Math.ceil((double) getUser().count() / pageSize));
+		object.put("totalSize", (int) Math.ceil((double) getUser().count() / pageSize));
 		object.put("currentPage", idx);
 		object.put("pageSize", pageSize);
 		object.put("data", array);
@@ -158,8 +155,7 @@ public class ChatModel {
 		}
 		JSONArray array = getUser().dirty().page(idx, pageSize);
 		JSONObject object = new JSONObject();
-		object.put("totalSize",
-				(int) Math.ceil((double) getUser().count() / pageSize));
+		object.put("totalSize", (int) Math.ceil((double) getUser().count() / pageSize));
 		object.put("currentPage", idx);
 		object.put("pageSize", pageSize);
 		object.put("data", array);
@@ -171,8 +167,7 @@ public class ChatModel {
 		if (object == null) {
 			return resultMessage(99, "");
 		}
-		JSONObject param = JSONHelper
-				.string2json(object.get("configstring").toString());
+		JSONObject param = JSONHelper.string2json(object.get("configstring").toString());
 		String tip = wechatHelper.checkSignature(param);
 		if (tip.equals("putao520:error")) {
 			return resultMessage(2, "");
@@ -181,12 +176,10 @@ public class ChatModel {
 		// param.get("appid").toString(),
 		// param.get("appsecret").toString());
 		// String openid = object.get("openid").toString();
-		JSONObject content = wechatModel.toall
-				.text(object.get("content").toString());
+		JSONObject content = wechatModel.toall.text(object.get("content").toString());
 		// 根据openid，获取用户id
 		// String userid = wechatHelper.getUserInfo(openid).toString();
-		JSONObject object2 = helper.send2all(0, content,
-				wechatModel.MSGTYPE_TEXT);
+		JSONObject object2 = helper.send2all(0, content, wechatModel.MSGTYPE_TEXT);
 		return resultMessage(object2);
 	}
 
@@ -214,8 +207,8 @@ public class ChatModel {
 	// 获取微信签名
 	@SuppressWarnings("unchecked")
 	public String getSign(String url) {
-//		url = url.replaceAll("@t", "/");
-//		url = url.replaceAll("@q", "&");
+		// url = url.replaceAll("@t", "/");
+		// url = url.replaceAll("@q", "&");
 		url = codec.DecodeHtmlTag(url);
 		String message = helper.signature(url);
 		JSONObject object = JSONHelper.string2json(message);
@@ -235,21 +228,17 @@ public class ChatModel {
 	}
 
 	// 下载媒体文件
-	public String MediaDownload(String mediaid) throws IOException {
-		byte[] by = helper.materialTempData(mediaid);
-		String Date = TimeHelper.stampToDate(TimeHelper.nowMillis())
-				.split(" ")[0];
-//		String fileurl = "http://123.57.214.226:8080/File/upload/" + Date + "/wechat/";
-		String fileurl = "c://JavaCode//tomcat//webapps//File//upload//" + Date + "\\wechat\\";
-		File file = new File(fileurl);
-		if (!file.exists()) {
-			file.mkdir();
+	
+	private String getAppIp(String key) {
+		String value = "";
+		try {
+			Properties pro = new Properties();
+			pro.load(new FileInputStream("URLConfig.properties"));
+			value = pro.getProperty(key);
+		} catch (Exception e) {
+			value = "";
 		}
-		String path = file+"//"+mediaid+".mp3";
-		FileOutputStream fos = new FileOutputStream(path);
-		fos.write(by);
-		fos.close();
-		return resultMessage(0, path.split("webapps")[1]);
+		return value;
 	}
 
 	@SuppressWarnings("unchecked")

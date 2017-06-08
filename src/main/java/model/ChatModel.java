@@ -18,7 +18,9 @@ import esayhelper.DBHelper;
 import esayhelper.JSONHelper;
 import esayhelper.TimeHelper;
 import esayhelper.fileHelper;
+import esayhelper.formHelper;
 import esayhelper.jGrapeFW_Message;
+import esayhelper.formHelper.formdef;
 import httpClient.request;
 import httpServer.reqSession;
 import nlogger.nlogger;
@@ -34,6 +36,8 @@ public class ChatModel {
 	private JSONObject _obj = new JSONObject();
 	private String APPID = "wxd4ed724da52799cb";
 	private String APPSECRET = "6b45df4cd58422eff5a3a707500cb8ca";
+//	private String APPID = "wxa8b80a4e47207f32";
+//	private String APPSECRET = "e8d52d91f10841cfe78ac5d08aa7aff2";
 	private wechatHelper helper = new wechatHelper(APPID, APPSECRET);
 
 	private DBHelper getRoute() {
@@ -108,8 +112,23 @@ public class ChatModel {
 
 	// 微信平台用户
 	public String addPUser(JSONObject object) {
-		String code = getUser().data(object).insertOnce().toString();
-		return code;
+		formHelper form = getUser().getChecker();
+		form.putRule("configstring", formdef.notNull);
+		form.putRule("platid", formdef.notNull);
+		int code = 0;
+		if (object!=null) {
+			try {
+				if (!form.checkRuleEx(object)) {
+					code = 1;
+				}else{
+					code = getUser().data(object).insertOnce()!=null?0:99;
+				}
+			} catch (Exception e) {
+				nlogger.logout(e);
+				code = 99;
+			}
+		}
+		return resultMessage(code, "添加第三方用户成功");
 	}
 
 	public int EditPUser(String id, JSONObject object) {
@@ -201,6 +220,7 @@ public class ChatModel {
 			session.delete(APPID + "_webtoken");
 		}
 		openid = helper.getOpenID(code);
+		nlogger.logout(openid);
 		return openid;
 	}
 
@@ -210,6 +230,7 @@ public class ChatModel {
 		// url = url.replaceAll("@t", "/");
 		// url = url.replaceAll("@q", "&");
 		url = codec.DecodeHtmlTag(url);
+		System.out.println(APPID);
 		String message = helper.signature(url);
 		JSONObject object = JSONHelper.string2json(message);
 		object.put("appid", APPID);

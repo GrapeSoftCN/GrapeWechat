@@ -1,12 +1,12 @@
 package interfaceApplication;
 
-
 import java.io.FileInputStream;
 import java.util.Properties;
 
 import org.json.simple.JSONObject;
 
 import apps.appsProxy;
+import esayhelper.CacheHelper;
 import esayhelper.JSONHelper;
 import httpClient.request;
 import model.ChatModel;
@@ -22,8 +22,7 @@ public class Wechat {
 	}
 
 	public String UpdateRoute(String id, String Info) {
-		return model.resultMessage(
-				model.EditRoute(id, JSONHelper.string2json(Info)), "修改成功");
+		return model.resultMessage(model.EditRoute(id, JSONHelper.string2json(Info)), "修改成功");
 	}
 
 	public String DeleteRoute(String id) {
@@ -39,8 +38,7 @@ public class Wechat {
 	}
 
 	public String PageByRoute(int ids, int pageSize, String RouteInfo) {
-		return model.PageRoute(ids, pageSize,
-				JSONHelper.string2json(RouteInfo));
+		return model.PageRoute(ids, pageSize, JSONHelper.string2json(RouteInfo));
 	}
 
 	/* 操作第三方平台用户 */
@@ -50,8 +48,7 @@ public class Wechat {
 	}
 
 	public String UpdatePUser(String id, String Info) {
-		return model.resultMessage(
-				model.EditPUser(id, JSONHelper.string2json(Info)), "修改成功");
+		return model.resultMessage(model.EditPUser(id, JSONHelper.string2json(Info)), "修改成功");
 	}
 
 	public String DeletePUser(String id) {
@@ -67,8 +64,7 @@ public class Wechat {
 	}
 
 	public String PageByPUser(int ids, int pageSize, String PUserInfo) {
-		return model.pagePUser(ids, pageSize,
-				JSONHelper.string2json(PUserInfo));
+		return model.pagePUser(ids, pageSize, JSONHelper.string2json(PUserInfo));
 	}
 
 	// 微信发送消息
@@ -94,13 +90,13 @@ public class Wechat {
 	}
 
 	// 微信下载素材
-	public String downloadMedia(String mediaid){
+	public String downloadMedia(String mediaid) {
 		String message = "";
-		try{
-			String hoString = "http://"+getAppIp("file").split("/")[0];
+		try {
+			String hoString = "http://" + getAppIp("file").split("/")[0];
 			System.out.println(hoString);
-			message = request.Get(hoString+"/File/WechatDownload?mediaid="+mediaid);
-		}catch(Exception e){
+			message = request.Get(hoString + "/File/WechatDownload?mediaid=" + mediaid);
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		return message;
@@ -110,6 +106,7 @@ public class Wechat {
 	public String getSignature(String url) {
 		return model.getSign(url);
 	}
+
 	private String getAppIp(String key) {
 		String value = "";
 		try {
@@ -121,8 +118,16 @@ public class Wechat {
 		}
 		return value;
 	}
+
 	// 获取用户信息
 	public String getUserInfo(String openid) {
-		return model.getUserInfo(openid);
+		CacheHelper helper = new CacheHelper();
+		String userinfo = "";
+		if (helper.get(openid+"_userinfo") != null) {
+			userinfo = helper.get(openid+"_userinfo");
+		}
+		userinfo = model.getUserInfo(openid);
+		helper.setget(openid+"_userinfo", userinfo);
+		return userinfo;
 	}
 }

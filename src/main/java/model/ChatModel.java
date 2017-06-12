@@ -36,8 +36,8 @@ public class ChatModel {
 	private JSONObject _obj = new JSONObject();
 	private String APPID = "wxd4ed724da52799cb";
 	private String APPSECRET = "6b45df4cd58422eff5a3a707500cb8ca";
-//	private String APPID = "wxa8b80a4e47207f32";
-//	private String APPSECRET = "e8d52d91f10841cfe78ac5d08aa7aff2";
+	// private String APPID = "wxa8b80a4e47207f32";
+	// private String APPSECRET = "e8d52d91f10841cfe78ac5d08aa7aff2";
 	private wechatHelper helper = new wechatHelper(APPID, APPSECRET);
 
 	private DBHelper getRoute() {
@@ -58,8 +58,24 @@ public class ChatModel {
 
 	// 第三方平台
 	public String addRoute(JSONObject object) {
-		String code = sdkServer.addListen(object.get("sdkname").toString(), object.get("invoke").toString());
-		return resultMessage(findRoute(code));
+		formHelper form = getUser().getChecker();
+		form.putRule("sdkname", formdef.notNull);
+		int code = 0;
+		if (object != null) {
+			try {
+				if (!form.checkRuleEx(object)) {
+					code = 1;
+				} else {
+					code = sdkServer.addListen(object.get("sdkname").toString(),
+							object.get("invoke").toString()) != null ? 0 : 99;
+				}
+			} catch (Exception e) {
+				nlogger.logout(e);
+				code = 99;
+			}
+		}
+//		String code = sdkServer.addListen(object.get("sdkname").toString(), object.get("invoke").toString());
+		return resultMessage(code, "添加第三方平台成功");
 	}
 
 	public int EditRoute(String id, JSONObject object) {
@@ -116,12 +132,12 @@ public class ChatModel {
 		form.putRule("configstring", formdef.notNull);
 		form.putRule("platid", formdef.notNull);
 		int code = 0;
-		if (object!=null) {
+		if (object != null) {
 			try {
 				if (!form.checkRuleEx(object)) {
 					code = 1;
-				}else{
-					code = getUser().data(object).insertOnce()!=null?0:99;
+				} else {
+					code = getUser().data(object).insertOnce() != null ? 0 : 99;
 				}
 			} catch (Exception e) {
 				nlogger.logout(e);
@@ -191,9 +207,7 @@ public class ChatModel {
 		if (tip.equals("putao520:error")) {
 			return resultMessage(2, "");
 		}
-		// wechatHelper wechatHelper = new wechatHelper(
-		// param.get("appid").toString(),
-		// param.get("appsecret").toString());
+		wechatHelper wechatHelper = new wechatHelper(object.get("appid").toString(), object.get("appsecret").toString());
 		// String openid = object.get("openid").toString();
 		JSONObject content = wechatModel.toall.text(object.get("content").toString());
 		// 根据openid，获取用户id
@@ -227,10 +241,7 @@ public class ChatModel {
 	// 获取微信签名
 	@SuppressWarnings("unchecked")
 	public String getSign(String url) {
-		// url = url.replaceAll("@t", "/");
-		// url = url.replaceAll("@q", "&");
 		url = codec.DecodeHtmlTag(url);
-		System.out.println(APPID);
 		String message = helper.signature(url);
 		JSONObject object = JSONHelper.string2json(message);
 		object.put("appid", APPID);
@@ -248,8 +259,6 @@ public class ChatModel {
 		helper.uploadmedia(file);
 	}
 
-	// 下载媒体文件
-	
 	private String getAppIp(String key) {
 		String value = "";
 		try {

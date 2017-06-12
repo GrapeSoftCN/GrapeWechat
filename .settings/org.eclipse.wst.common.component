@@ -5,7 +5,7 @@
         <wb-resource deploy-path="/WEB-INF/classes" source-path="/src/main/java"/>
         <wb-resource deploy-path="/WEB-INF/classes" source-path="/src/main/resources"/>
         <wb-resource deploy-path="/WEB-INF/classes" source-path="/src/test/java"/>
-        <property name="context-root" value="GrapeWechat"/>
         <property name="java-output-path" value="/GrapeWechat/target/classes"/>
+        <property name="context-root" value="GrapeWechat"/>
     </wb-module>
 </project-modules>

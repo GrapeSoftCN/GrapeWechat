@@ -5,12 +5,10 @@ import java.util.Properties;
 
 import org.json.simple.JSONObject;
 
-import apps.appsProxy;
 import esayhelper.CacheHelper;
 import esayhelper.JSONHelper;
 import httpClient.request;
 import model.ChatModel;
-import rpc.execRequest;
 
 public class Wechat {
 	private ChatModel model = new ChatModel();
@@ -130,4 +128,5 @@ public class Wechat {
 		helper.setget(openid+"_userinfo", userinfo);
 		return userinfo;
 	}
+	
 }

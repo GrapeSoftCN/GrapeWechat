@@ -196,7 +196,10 @@ public class ChatModel {
 		object.put("data", array);
 		return resultMessage(object);
 	}
-
+	public JSONObject GetConfigString(String id) {
+		JSONObject configString = getUser().eq("id", id).field("configstring").find();
+		return configString;
+	}
 	// 微信发送消息
 	public String send(JSONObject object) {
 		if (object == null) {
@@ -272,7 +275,7 @@ public class ChatModel {
 	}
 
 	@SuppressWarnings("unchecked")
-	private String resultMessage(JSONObject object) {
+	public String resultMessage(JSONObject object) {
 		_obj.put("records", object);
 		return resultMessage(0, _obj.toString());
 	}

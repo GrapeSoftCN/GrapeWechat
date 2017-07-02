@@ -1,16 +1,23 @@
 package interfaceApplication;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.util.Properties;
 
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import esayhelper.CacheHelper;
 import esayhelper.JSONHelper;
 import httpClient.request;
 import model.ChatModel;
+import nlogger.nlogger;
+import thirdsdk.wechatDef;
+import thirdsdk.wechatHelper;
+import thirdsdk.wechatModel;
 
 public class Wechat {
+	private wechatHelper helpers;
 	private ChatModel model = new ChatModel();
 
 	/* 操作第三方平台 */
@@ -65,6 +72,12 @@ public class Wechat {
 		return model.pagePUser(ids, pageSize, JSONHelper.string2json(PUserInfo));
 	}
 
+	public String getPUser(String uid) {
+		return model.resultMessage(0, model.GetConfigString(uid).toString());
+		// return model.pagePUser(ids, pageSize,
+		// JSONHelper.string2json(PUserInfo));
+	}
+
 	// 微信发送消息
 	public String sendMsg(String parameter) {
 		JSONObject object = JSONHelper.string2json(parameter);
@@ -105,6 +118,91 @@ public class Wechat {
 		return model.getSign(url);
 	}
 
+	// 获取用户信息
+	public String getUserInfo(String openid) {
+		CacheHelper helper = new CacheHelper();
+		String userinfo = "";
+		if (helper.get(openid + "_userinfo") != null) {
+			userinfo = helper.get(openid + "_userinfo");
+		}
+		userinfo = model.getUserInfo(openid);
+		helper.setget(openid + "_userinfo", userinfo);
+		return userinfo;
+	}
+
+	public JSONObject uploadmedia(String id) {
+		helpers = getWechatHelper(id);
+		JSONObject object = null;
+		if (helpers != null) {
+			object = new JSONObject();
+			object = helpers.uploadmedia(
+					new File("F:\\tomcat8.0\\webapps\\File\\upload\2017-07-01\\tlszf_bgPic_20161104-01.jpg"));
+		}
+		nlogger.logout(object);
+		return object;
+	}
+
+	/**
+	 * 推送图文消息
+	 * 
+	 * @project GrapeWechat
+	 * @package interfaceApplication
+	 * @file Wechat.java
+	 * 
+	 * @param id
+	 * @return
+	 *
+	 */
+	public String UploadMpNew(String id, String content) {
+		JSONObject object = new JSONObject();
+		wechatModel.uploadArticle upload = new wechatModel.uploadArticle();
+		JSONObject media = uploadmedia(id);
+		JSONArray array = upload.newArticle(media.getString("media_id"), "", "测试", "测试描述",
+				"http://0.xiaoqrobot.duapp.com/images/avatar_liufeng.jpg", "这是个测试", false).toArticleArray();
+		nlogger.logout(array);
+		helpers = getWechatHelper(id);
+		if (helpers != null && array != null) {
+			object = helpers.uploadArticles(array);
+			nlogger.logout(object);
+			object = wechatModel.toall.mpNews(object.getString("media_id"));
+			object = helpers.send2all(0, object, wechatModel.MSGTYPE_NEWS);
+		}
+		nlogger.logout("array: " + array + ",obj: " + object);
+		return object.toJSONString();
+	}
+
+	private wechatHelper getWechatHelper(String id) {
+		CacheHelper cache = new CacheHelper("redis");
+		// redis cache = new redis();
+		JSONObject object = getConfig(id);
+		nlogger.logout(object);
+		String appid;
+		String appsecret;
+		if (object != null) {
+			try {
+				appid = object.getString("appid");
+				appsecret = object.getString("appsecret");
+				if (cache.get(appid) != null) {
+					cache.delete(appid);
+				}
+				if (cache.get(appid + "_webtoken") != null) {
+					cache.delete(appid + "_webtoken");
+				}
+				helpers = new wechatHelper(appid, appsecret);
+			} catch (Exception e) {
+				nlogger.logout(e);
+				helpers = null;
+			}
+		}
+		return helpers;
+	}
+
+	private JSONObject getConfig(String id) {
+		JSONObject rObject = JSONHelper.string2json(getPUser(id));
+		rObject = JSONHelper.string2json(rObject.getString("message"));
+		return rObject == null ? null : JSONHelper.string2json(rObject.getString("configstring"));
+	}
+
 	private String getAppIp(String key) {
 		String value = "";
 		try {
@@ -116,17 +214,4 @@ public class Wechat {
 		}
 		return value;
 	}
-
-	// 获取用户信息
-	public String getUserInfo(String openid) {
-		CacheHelper helper = new CacheHelper();
-		String userinfo = "";
-		if (helper.get(openid+"_userinfo") != null) {
-			userinfo = helper.get(openid+"_userinfo");
-		}
-		userinfo = model.getUserInfo(openid);
-		helper.setget(openid+"_userinfo", userinfo);
-		return userinfo;
-	}
-	
 }

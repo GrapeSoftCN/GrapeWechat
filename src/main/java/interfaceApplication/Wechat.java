@@ -7,12 +7,11 @@ import java.util.Properties;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
-import esayhelper.CacheHelper;
-import esayhelper.JSONHelper;
+import cache.CacheHelper;
 import httpClient.request;
+import json.JSONHelper;
 import model.ChatModel;
 import nlogger.nlogger;
-import thirdsdk.wechatDef;
 import thirdsdk.wechatHelper;
 import thirdsdk.wechatModel;
 
@@ -130,16 +129,31 @@ public class Wechat {
 		return userinfo;
 	}
 
-	public JSONObject uploadmedia(String id) {
+	public JSONObject uploadmedia(String id, String imageurl) {
 		helpers = getWechatHelper(id);
+		// String path = "C:\\JavaCode\\tomcat\\webapps";
 		JSONObject object = null;
 		if (helpers != null) {
 			object = new JSONObject();
 			object = helpers.uploadmedia(
-					new File("F:\\tomcat8.0\\webapps\\File\\upload\2017-07-01\\tlszf_bgPic_20161104-01.jpg"));
+					new File("F:\\tomcat8.0\\webapps\\File\\upload\\2017-07-01\\tlszf_bgPic_20161104-01.jpg"));
+			// object = helpers.uploadmedia(new File(path +
+			// getimage(imageurl)));
 		}
 		nlogger.logout(object);
 		return object;
+	}
+
+	private String getimage(String imageURL) {
+		int i = 0;
+		if (imageURL.contains("File//upload")) {
+			i = imageURL.toLowerCase().indexOf("file//upload");
+		}
+		if (imageURL.contains("File\\upload")) {
+			i = imageURL.toLowerCase().indexOf("file\\upload");
+		}
+		imageURL = imageURL.substring(i);
+		return "\\" + imageURL;
 	}
 
 	/**
@@ -154,20 +168,18 @@ public class Wechat {
 	 *
 	 */
 	public String UploadMpNew(String id, String content) {
+		JSONObject contents = JSONHelper.string2json(content);
 		JSONObject object = new JSONObject();
 		wechatModel.uploadArticle upload = new wechatModel.uploadArticle();
-		JSONObject media = uploadmedia(id);
-		JSONArray array = upload.newArticle(media.getString("media_id"), "", "测试", "测试描述",
-				"http://0.xiaoqrobot.duapp.com/images/avatar_liufeng.jpg", "这是个测试", false).toArticleArray();
-		nlogger.logout(array);
+		JSONObject media = uploadmedia(id, "");
+		JSONArray array = upload.newArticle(media.getString("media_id"), "", contents.getString("mainName"),
+				contents.getString("content"), "", contents.getString("desp"), false).toArticleArray();
 		helpers = getWechatHelper(id);
 		if (helpers != null && array != null) {
 			object = helpers.uploadArticles(array);
-			nlogger.logout(object);
-			object = wechatModel.toall.mpNews(object.getString("media_id"));
-			object = helpers.send2all(0, object, wechatModel.MSGTYPE_NEWS);
+			object = helpers.send2all(0, wechatModel.toall.mpNews(object.getString("media_id")),
+					wechatModel.MSGTYPE_MPNEWS);
 		}
-		nlogger.logout("array: " + array + ",obj: " + object);
 		return object.toJSONString();
 	}
 

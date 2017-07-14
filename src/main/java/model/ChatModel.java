@@ -2,27 +2,18 @@ package model;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.net.URL;
-import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.Properties;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+import JGrapeSystem.jGrapeFW_Message;
 import apps.appsProxy;
 import check.formHelper;
 import check.formHelper.formdef;
 import database.DBHelper;
-import esayhelper.JSONHelper;
-import esayhelper.TimeHelper;
-import esayhelper.fileHelper;
-import esayhelper.jGrapeFW_Message;
-import httpClient.request;
-import httpServer.reqSession;
+import json.JSONHelper;
 import nlogger.nlogger;
 import security.codec;
 import session.session;
@@ -36,8 +27,10 @@ public class ChatModel {
 	private JSONObject _obj = new JSONObject();
 	private String APPID = "wxd4ed724da52799cb";
 	private String APPSECRET = "6b45df4cd58422eff5a3a707500cb8ca";
-	// private String APPID = "wxa8b80a4e47207f32";
-	// private String APPSECRET = "e8d52d91f10841cfe78ac5d08aa7aff2";
+//	private String APPID = "wxa8b80a4e47207f32";
+//	private String APPSECRET = "e8d52d91f10841cfe78ac5d08aa7aff2";
+//	private String APPID = "wx98fc10d9ac9e0953";
+//	 private String APPSECRET = "63890fa2402f4e6aff5b86d327bf4a37";
 	private wechatHelper helper = new wechatHelper(APPID, APPSECRET);
 
 	private DBHelper getRoute() {
@@ -120,6 +113,7 @@ public class ChatModel {
 		JSONArray array = getRoute().dirty().page(ids, pageSize);
 		JSONObject object = new JSONObject();
 		object.put("totalSize", (int) Math.ceil((double) getRoute().count() / pageSize));
+		getRoute().clear();
 		object.put("currentPage", ids);
 		object.put("pageSize", pageSize);
 		object.put("data", array);
@@ -191,6 +185,7 @@ public class ChatModel {
 		JSONArray array = getUser().dirty().page(idx, pageSize);
 		JSONObject object = new JSONObject();
 		object.put("totalSize", (int) Math.ceil((double) getUser().count() / pageSize));
+		getUser().clear();
 		object.put("currentPage", idx);
 		object.put("pageSize", pageSize);
 		object.put("data", array);
@@ -244,10 +239,18 @@ public class ChatModel {
 	// 获取微信签名
 	@SuppressWarnings("unchecked")
 	public String getSign(String url) {
-		url = codec.DecodeHtmlTag(url);
-		String message = helper.signature(url);
-		JSONObject object = JSONHelper.string2json(message);
-		object.put("appid", APPID);
+		JSONObject object = null;
+		try {
+			url = codec.DecodeHtmlTag(url);
+			url = URLEncoder.encode(url, "utf-8");
+			nlogger.logout(url);
+			String message = helper.signature(url);
+			object = JSONHelper.string2json(message);
+			object.put("appid", APPID);
+		} catch (Exception e) {
+			nlogger.logout(e);
+			object = null;
+		}
 		return resultMessage(0, object.toString());
 	}
 
